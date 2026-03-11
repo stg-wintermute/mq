@@ -1,0 +1,49 @@
+MINER_DUMP
+topic: Sample test data for mq
+depth: 1
+date: 2026-03-10
+status: COMPLETE
+record_count: 3
+<<<END>>>
+
+SOURCE
+id: 1
+ts: 2026-03-10T00:00:00Z
+relevance: HIGH
+title: VLOOKUP Adoption in MBA Programs
+url: https://example.com/vlookup-study
+keywords: VLOOKUP, lookup functions, adoption, MBA
+content:
+  Survey of 1,597 MBA professionals: 82.7% reported ever using VLOOKUP or HLOOKUP.
+  Daily use: 12.5%.
+  General population estimate: <33% familiar with lookup functions.
+
+<<<END>>>
+
+SOURCE
+id: 2
+ts: 2026-03-10T00:00:00Z
+relevance: MEDIUM
+title: IF Function Usage Statistics
+url: https://example.com/if-stats
+keywords: IF, conditional, formula, usage
+content:
+  IF function: 90.7% ever used (MBA population), 25.7% daily use.
+  Listed as #2 most popular Excel function by Microsoft.
+  Considered universal Tier 1 formula.
+
+<<<END>>>
+
+SOURCE
+id: 3
+ts: 2026-03-10T00:00:00Z
+relevance: LOW
+title: Advanced Array Formulas
+url: https://example.com/array-formulas
+keywords: LAMBDA, array, advanced, power user
+content:
+  LAMBDA and array formulas used by fewer than 5% of spreadsheet users.
+  Classified as Tier 3 power-user features.
+  Out of scope for basic/intermediate evaluation harnesses.
+
+<<<END>>>
