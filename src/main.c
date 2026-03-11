@@ -905,6 +905,9 @@ int main(int argc, char **argv)
 {
     if (argc < 2) { usage(); return 1; }
     const char *cmd = argv[1];
+    if (!strcmp(cmd, "--help") || !strcmp(cmd, "-h") || !strcmp(cmd, "help")) {
+        usage(); return 0;
+    }
     argc -= 2;
     argv += 2;
 
