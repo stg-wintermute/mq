@@ -3,6 +3,13 @@
 #include <string.h>
 #include <ctype.h>
 #include <stddef.h>
+#include <unistd.h>
+
+#define BOLD  "\033[1m"
+#define DIM   "\033[2m"
+#define RESET "\033[0m"
+
+static int use_color(void) { return isatty(STDOUT_FILENO); }
 
 /* -------------------------------------------------------------------------
  * Format name → enum
@@ -17,7 +24,9 @@ Format parse_format(const char *s)
     if (!strcmp(s, "title"))      return FMT_TITLE;
     if (!strcmp(s, "jsonl"))      return FMT_JSONL;
     if (!strcmp(s, "tsv"))        return FMT_TSV;
-    fprintf(stderr, "mq: unknown format '%s' (facts/compact/full/title/jsonl/tsv)\n", s);
+    if (!strcmp(s, "human"))      return FMT_HUMAN;
+    if (!strcmp(s, "agent"))      return FMT_AGENT;
+    fprintf(stderr, "mq: unknown format '%s' (human/facts/compact/full/title/jsonl/tsv/agent)\n", s);
     return FMT_FACTS;
 }
 
@@ -251,8 +260,51 @@ void fmt_record(const Record *r, Format fmt, int preview)
     }
 
     /* ------------------------------------------------------------------
+     * human: Title
+     *          url
+     *          keywords  [shortfile:id/R]
+     * ---------------------------------------------------------------- */
+    case FMT_HUMAN: {
+        int col = use_color();
+        if (col) fputs(BOLD, stdout);
+        fputs(r->title ? r->title : "(no title)", stdout);
+        if (col) fputs(RESET, stdout);
+        putchar('\n');
+        if (r->url) printf("  %s\n", r->url);
+        fputs("  ", stdout);
+        if (r->keywords) fputs(r->keywords, stdout);
+        if (col) fputs(DIM, stdout);
+        fputs(" [", stdout);
+        print_short_fname(r->file ? r->file : "");
+        putchar(':');
+        fputs(r->id ? r->id : "?", stdout);
+        putchar('/');
+        putchar(r->relevance ? (char)toupper((unsigned char)r->relevance[0]) : '?');
+        putchar(']');
+        if (col) fputs(RESET, stdout);
+        putchar('\n');
+        break;
+    }
+
+    /* ------------------------------------------------------------------
+     * agent: [shortfile:id/R] title | url | keywords  (single line, no blanks)
+     * ---------------------------------------------------------------- */
+    case FMT_AGENT:
+        putchar('[');
+        print_short_fname(r->file ? r->file : "");
+        putchar(':');
+        fputs(r->id ? r->id : "?", stdout);
+        putchar('/');
+        putchar(r->relevance ? (char)toupper((unsigned char)r->relevance[0]) : '?');
+        fputs("] ", stdout);
+        fputs(r->title ? r->title : "(no title)", stdout);
+        if (r->url)      { fputs(" | ", stdout); fputs(r->url,      stdout); }
+        if (r->keywords) { fputs(" | ", stdout); fputs(r->keywords, stdout); }
+        putchar('\n');
+        break;
+
+    /* ------------------------------------------------------------------
      * tsv: id TAB relevance TAB title TAB url TAB keywords TAB file
-     * tabs/newlines inside values are replaced with spaces
      * ---------------------------------------------------------------- */
     case FMT_TSV: {
 #define TFIELD(v) do { \

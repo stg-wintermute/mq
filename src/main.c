@@ -64,6 +64,8 @@ static int scan_flags(int argc, char **argv, Flags *f)
             f->exit_status = true;
         } else if (!strcmp(a, "--word") || !strcmp(a, "-w")) {
             f->word = true;
+        } else if (!strcmp(a, "-a") || !strcmp(a, "--agent")) {
+            f->fmt = FMT_AGENT;
         } else if (!strcmp(a, "-e") && i + 1 < argc) {
             if (f->n_epats < MQ_MAX_EPATS) f->epats[f->n_epats++] = argv[++i];
         } else {
@@ -85,7 +87,8 @@ static void print_record(const Record *r, const Flags *f)
     if (f->tmpl) fmt_template(r, f->tmpl);
     else         fmt_record(r, f->fmt, f->preview);
     /* blank separator between records for human formats */
-    if (f->fmt != FMT_TSV && f->fmt != FMT_JSONL && !f->tmpl)
+    if (f->fmt != FMT_TSV && f->fmt != FMT_JSONL &&
+        f->fmt != FMT_AGENT && !f->tmpl)
         putchar('\n');
 }
 
@@ -168,7 +171,7 @@ static void usage_top(void)
 
 static int cmd_top(int argc, char **argv)
 {
-    Flags f = default_flags(FMT_FACTS);
+    Flags f = default_flags(FMT_HUMAN);
     argc = scan_flags(argc, argv, &f);
 
     if (argc < 3) { usage_top(); return 1; }
@@ -219,7 +222,7 @@ static void usage_filter(void)
 
 static int cmd_filter(int argc, char **argv)
 {
-    Flags f = default_flags(FMT_FACTS);
+    Flags f = default_flags(FMT_HUMAN);
     argc = scan_flags(argc, argv, &f);
     if (argc < 2) { usage_filter(); return 1; }
 
@@ -255,7 +258,7 @@ static void usage_grep(void)
 
 static int cmd_grep(int argc, char **argv)
 {
-    Flags f = default_flags(FMT_FACTS);
+    Flags f = default_flags(FMT_HUMAN);
     argc = scan_flags(argc, argv, &f);
 
     /* collect patterns: -e flags + optional positional */
@@ -302,7 +305,8 @@ static int cmd_grep(int argc, char **argv)
         }
 
         if (matched) {
-            if (f.fmt != FMT_TITLE && f.fmt != FMT_JSONL && f.fmt != FMT_TSV && !f.tmpl)
+            if (f.fmt != FMT_TITLE && f.fmt != FMT_JSONL && f.fmt != FMT_TSV &&
+                f.fmt != FMT_AGENT && !f.tmpl)
                 printf("# %s\n", r->file ? r->file : "");
             print_record(r, &f);
             seen++;
@@ -350,7 +354,7 @@ static int cmd_titles(int argc, char **argv)
 
 static int cmd_select(int argc, char **argv)
 {
-    Flags f = default_flags(FMT_FACTS);
+    Flags f = default_flags(FMT_HUMAN);
     argc = scan_flags(argc, argv, &f);
     if (argc < 2) { fputs("usage: mq select fields file ...\n", stderr); return 1; }
 
@@ -507,7 +511,8 @@ static int cmd_dump(int argc, char **argv)
     for (int i = 0; i < ra->len; i++) {
         if (f.limit && seen >= f.limit) break;
         const Record *r = ra->data[i];
-        if (f.fmt != FMT_TITLE && f.fmt != FMT_JSONL && f.fmt != FMT_TSV && !f.tmpl)
+        if (f.fmt != FMT_TITLE && f.fmt != FMT_JSONL && f.fmt != FMT_TSV &&
+            f.fmt != FMT_AGENT && !f.tmpl)
             printf("# %s\n", r->file ? r->file : "");
         print_record(r, &f);
         seen++;
@@ -565,7 +570,7 @@ static int cmd_show(int argc, char **argv)
 
 static int cmd_sample(int argc, char **argv)
 {
-    Flags f = default_flags(FMT_FACTS);
+    Flags f = default_flags(FMT_HUMAN);
     argc = scan_flags(argc, argv, &f);
     if (argc < 2) {
         fputs("usage: mq sample N file ...\n", stderr);
@@ -600,7 +605,7 @@ static int cmd_sample(int argc, char **argv)
 
 static int cmd_dedup(int argc, char **argv)
 {
-    Flags f = default_flags(FMT_FACTS);
+    Flags f = default_flags(FMT_HUMAN);
     argc = scan_flags(argc, argv, &f);
     if (argc < 2) {
         fputs("usage: mq dedup field file ...\n"
@@ -679,7 +684,7 @@ static void freq_add_csv(FreqEntry **e, int *n, int *cap, const char *val)
 
 static int cmd_freq(int argc, char **argv)
 {
-    Flags f = default_flags(FMT_FACTS);
+    Flags f = default_flags(FMT_HUMAN);
     argc = scan_flags(argc, argv, &f);
     if (argc < 1) {
         fputs("usage: mq freq [field] file ...\n"
@@ -757,7 +762,7 @@ static int cmd_urls(int argc, char **argv)
 
 static int cmd_group(int argc, char **argv)
 {
-    Flags f = default_flags(FMT_FACTS);
+    Flags f = default_flags(FMT_HUMAN);
     argc = scan_flags(argc, argv, &f);
     if (argc < 2) {
         fputs("usage: mq group field file ...\n"
@@ -823,7 +828,7 @@ done:
 
 static int cmd_slice(int argc, char **argv)
 {
-    Flags f = default_flags(FMT_FACTS);
+    Flags f = default_flags(FMT_HUMAN);
     f.no_sort = true;   /* positional by default */
     argc = scan_flags(argc, argv, &f);
     if (argc < 2) {
@@ -890,7 +895,8 @@ static void usage(void)
         "  slice       records by index range:         mq slice 0:20 files\n"
         "\n"
         "flags (most commands):\n"
-        "  -f, --format=<facts|compact|full|title|jsonl|tsv>  (default: facts)\n"
+        "  -a, --agent            token-dense output for LLM context: title | url | keywords\n"
+        "  -f, --format=<human|facts|compact|full|title|jsonl|tsv|agent>  (default: human)\n"
         "  -n, --limit=N          max records to output\n"
         "      --preview=N        chars for compact mode (default: 200)\n"
         "      --no-sort          skip relevance sort\n"

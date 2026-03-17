@@ -59,6 +59,8 @@ typedef enum {
     FMT_TITLE,
     FMT_JSONL,
     FMT_TSV,
+    FMT_HUMAN,   /* default human output: [ref] title / url / keywords */
+    FMT_AGENT,   /* token-dense LLM output: title | url | keywords */
 } Format;
 
 /* -------------------------------------------------------------------------

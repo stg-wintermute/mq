@@ -34,7 +34,8 @@ COMMANDS
 
 FLAGS
 -----
-  -f, --format=FORMAT    Output format: facts (default), compact, full, title, jsonl, tsv
+  -a, --agent            Token-dense output for LLM contexts (see OUTPUT FORMATS)
+  -f, --format=FORMAT    Output format (default: human)
   -n, --limit=N          Max records to output
       --preview=N        Chars of content in compact mode (default: 200)
       --no-sort          Skip relevance sort (preserve file order)
@@ -43,6 +44,17 @@ FLAGS
   -e  pattern            Additional grep pattern, OR semantics (repeatable)
   -w, --word             Whole-word match in grep
   Smart case:            All-lowercase grep pattern → case-insensitive automatically
+
+OUTPUT FORMATS
+--------------
+  human   Bold title, url, keywords  [file:id/R]   (default; ANSI color on TTY)
+  agent   [file:id/R] title | url | keywords        (single line, no blanks; use -a)
+  facts   [file:id/R] title / first content line    (legacy)
+  compact [RELEVANCE] title / url / content preview
+  full    Full SOURCE block
+  title   [RELEVANCE] title only
+  jsonl   One JSON object per record
+  tsv     id, relevance, title, url, keywords, file (tab-separated)
 
 
 EXAMPLES
@@ -85,6 +97,9 @@ EXAMPLES
 
   # all unique source URLs
   mq urls docs/research/ | sort
+
+  # agent mode — token-dense, one line per record, ref included for mq show drilldown
+  mq top 10 "query" docs/research/ -a
 
   # compact custom output
   mq top 5 "pivot table" docs/research/ -T '{{id}} [{{relevance}}] {{title}}'
